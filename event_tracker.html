@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MXC Event Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',Arial,sans-serif;background:#f4f7fa;color:#1a2533;min-height:100vh}
+header{background:#1a3a5c;color:#fff;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+header h1{font-size:1.1rem;font-weight:700}
+header span{font-size:0.75rem;opacity:0.65}
+nav{background:#1a3a5c;display:flex;overflow-x:auto;border-top:1px solid rgba(255,255,255,0.12);position:sticky;top:57px;z-index:199}
+nav::-webkit-scrollbar{height:0}
+.nav-btn{background:none;border:none;color:rgba(255,255,255,0.65);padding:12px 18px;font-size:0.85rem;font-weight:500;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;font-family:inherit;transition:all 0.2s}
+.nav-btn:hover{color:#fff;background:rgba(255,255,255,0.08)}
+.nav-btn.active{color:#fff;border-bottom-color:#e8a020}
+.badge{background:#e8a020;color:#fff;font-size:0.65rem;font-weight:700;padding:1px 6px;border-radius:10px;margin-left:4px}
+main{max-width:1080px;margin:0 auto;padding:20px 14px 60px}
+.view{display:none}
+.card{background:#fff;border-radius:10px;box-shadow:0 2px 10px rgba(26,58,92,0.09);padding:22px;margin-bottom:18px}
+.card-title{font-size:0.95rem;font-weight:700;color:#1a3a5c;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #d0dbe8}
+.parse-box{background:#eef4fb;border:1.5px dashed #a0bcd8;border-radius:10px;padding:16px;margin-bottom:18px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.form-grid{grid-template-columns:1fr}}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fg.full{grid-column:1/-1}
+label{font-size:0.75rem;font-weight:700;color:#1a3a5c;text-transform:uppercase;letter-spacing:0.4px}
+input[type=text],input[type=date],input[type=time],textarea,select{border:1.5px solid #d0dbe8;border-radius:7px;padding:9px 11px;font-size:0.9rem;font-family:inherit;color:#1a2533;background:#fff;width:100%;transition:border-color 0.2s}
+input:focus,textarea:focus{outline:none;border-color:#2a5a8c;box-shadow:0 0 0 3px rgba(42,90,140,0.1)}
+textarea{resize:vertical;min-height:75px}
+.tg{display:flex;gap:8px}
+.tb{flex:1;padding:8px 0;border:1.5px solid #d0dbe8;border-radius:20px;background:#fff;color:#6b7f93;font-size:0.83rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all 0.18s}
+.tb.yes.on{background:#28a745;border-color:#28a745;color:#fff}
+.tb.no.on{background:#dc3545;border-color:#dc3545;color:#fff}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:9px 20px;border-radius:7px;border:none;font-size:0.88rem;font-weight:600;cursor:pointer;font-family:inherit;transition:all 0.18s}
+.btn-primary{background:#1a3a5c;color:#fff}
+.btn-primary:hover{background:#2a5a8c}
+.btn-accent{background:#e8a020;color:#fff}
+.btn-accent:hover{background:#c8880e}
+.btn-outline{background:#fff;color:#1a3a5c;border:1.5px solid #1a3a5c}
+.btn-outline:hover{background:#1a3a5c;color:#fff}
+.btn-red{background:#dc3545;color:#fff;font-size:0.8rem;padding:7px 14px}
+.btn-red:hover{background:#b02a37}
+.btn-sm{padding:5px 11px;font-size:0.78rem}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.note-hist{margin-top:8px;max-height:160px;overflow-y:auto}
+.note-item{background:#f0f4f9;border-left:3px solid #2a5a8c;padding:7px 11px;margin-bottom:6px;border-radius:0 6px 6px 0;font-size:0.82rem}
+.note-ts{font-size:0.72rem;color:#6b7f93;font-weight:700;margin-bottom:2px}
+.filter-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:14px}
+.filter-bar input{font-size:0.82rem;padding:7px 10px}
+.tbl-wrap{overflow-x:auto;border-radius:7px;border:1px solid #d0dbe8}
+table{width:100%;border-collapse:collapse;font-size:0.84rem}
+thead th{background:#1a3a5c;color:#fff;padding:10px 11px;text-align:left;font-weight:600;font-size:0.77rem;white-space:nowrap}
+tbody tr{border-bottom:1px solid #e8edf2;cursor:pointer;transition:background 0.14s}
+tbody tr:hover{background:#eef4fb}
+tbody td{padding:9px 11px;vertical-align:middle}
+.pill{display:inline-block;padding:2px 9px;border-radius:12px;font-size:0.72rem;font-weight:700}
+.p-yes{background:#d4edda;color:#155724}
+.p-no{background:#f8d7da;color:#721c24}
+.no-rows{text-align:center;padding:36px;color:#6b7f93;font-size:0.9rem}
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-mo{font-size:1.05rem;font-weight:700;color:#1a3a5c}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dn{text-align:center;font-size:0.7rem;font-weight:700;color:#6b7f93;padding:5px 0;text-transform:uppercase}
+.cal-cell{background:#fff;border:1px solid #d0dbe8;border-radius:5px;min-height:75px;padding:4px}
+@media(max-width:560px){.cal-cell{min-height:48px}}
+.cal-cell.other{background:#f0f3f7;opacity:0.55}
+.cal-cell.today{border:2px solid #e8a020}
+.cal-num{font-size:0.72rem;font-weight:700;color:#6b7f93;margin-bottom:2px}
+.cal-cell.today .cal-num{color:#e8a020}
+.cal-ev{background:#1a3a5c;color:#fff;font-size:0.63rem;padding:2px 4px;border-radius:3px;margin-bottom:2px;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;display:block}
+.cal-ev:hover{background:#2a5a8c}
+#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#1a3a5c;color:#fff;padding:11px 26px;border-radius:8px;font-size:0.88rem;font-weight:500;box-shadow:0 4px 14px rgba(0,0,0,0.2);z-index:9999;opacity:0;pointer-events:none;transition:opacity 0.3s}
+#toast.show{opacity:1}
+.sec-hdr{margin-bottom:16px}
+.sec-hdr h2{font-size:1.15rem;font-weight:700;color:#1a3a5c}
+.sec-hdr p{font-size:0.82rem;color:#6b7f93;margin-top:3px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>🎬 MXC Event Tracker</h1>
+    <span>McKesson Experience Center</span>
+  </div>
+  <span id="hdrCount" style="font-size:0.78rem;opacity:0.7"></span>
+</header>
+
+<nav>
+  <button class="nav-btn active" id="nb-add" onclick="showView('add')">➕ Add Event</button>
+  <button class="nav-btn" id="nb-list" onclick="showView('list')">📋 Events List</button>
+  <button class="nav-btn" id="nb-cal" onclick="showView('cal')">📅 Calendar</button>
+  <button class="nav-btn" id="nb-arch" onclick="showView('arch')">🗄️ Archived <span class="badge" id="archBadge">0</span></button>
+</nav>
+
+<main>
+
+<!-- ====== ADD/EDIT VIEW ====== -->
+<div class="view" id="view-add" style="display:block">
+  <div class="sec-hdr">
+    <h2 id="formTitle">Add New Event</h2>
+    <p id="formSub">Paste an assignment email to auto-fill, or enter details manually.</p>
+  </div>
+
+  <div class="parse-box">
+    <div class="card-title">📧 Parse Assignment Email</div>
+    <div class="fg">
+      <textarea id="emailPaste" rows="5" placeholder="Paste the full 'New Digital Lead Assignment' email here, then click ⚡ Parse Email..."></textarea>
+    </div>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn btn-accent" onclick="parseEmail()">⚡ Parse Email</button>
+      <button class="btn btn-outline" onclick="document.getElementById('emailPaste').value=''">Clear</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📝 Event Details</div>
+    <input type="hidden" id="evId">
+    <div class="form-grid">
+      <div class="fg">
+        <label>Date</label>
+        <input type="date" id="fDate">
+      </div>
+      <div class="fg">
+        <label>Event Name</label>
+        <input type="text" id="fName" placeholder="Event name">
+      </div>
+      <div class="fg">
+        <label>Meeting ID</label>
+        <input type="text" id="fMid" placeholder="e.g. 21336">
+      </div>
+      <div class="fg">
+        <label>Location</label>
+        <input type="text" id="fLoc" placeholder="e.g. Microsoft Teams, Studio A">
+      </div>
+      <div class="fg">
+        <label>Start Time</label>
+        <input type="time" id="fStart">
+      </div>
+      <div class="fg">
+        <label>End Time</label>
+        <input type="time" id="fEnd">
+      </div>
+      <div class="fg full">
+        <label>Point of Contact</label>
+        <input type="text" id="fContact" placeholder="Contact name">
+      </div>
+      <div class="fg full">
+        <label>Labor Booked</label>
+        <input type="text" id="fLabor" placeholder="e.g. Camera Op - John Smith, Audio Tech - Jane Doe">
+      </div>
+
+      <div class="fg">
+        <label>On MXC Calendar?</label>
+        <div class="tg">
+          <button class="tb yes" id="mxcY" onclick="tog('mxc','yes')">✅ Yes</button>
+          <button class="tb no on" id="mxcN" onclick="tog('mxc','no')">❌ No</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>CVENT Form</label>
+        <div class="tg">
+          <button class="tb yes" id="cvY" onclick="tog('cv','yes')">✅ Yes</button>
+          <button class="tb no on" id="cvN" onclick="tog('cv','no')">❌ No</button>
+        </div>
+      </div>
+      <div class="fg">
+        <label>Event Completed</label>
+        <div class="tg">
+          <button class="tb yes" id="coY" onclick="tog('co','yes')">✅ Yes</button>
+          <button class="tb no on" id="coN" onclick="tog('co','no')">❌ No</button>
+        </div>
+      </div>
+
+      <div class="fg full">
+        <label>Notes (New Entry)</label>
+        <textarea id="fNotes" placeholder="Type a new note to add to history..."></textarea>
+      </div>
+      <div class="fg full" id="nhSection" style="display:none">
+        <label>📋 Notes History</label>
+        <div class="note-hist" id="nhList"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEv()">💾 Save Event</button>
+      <button class="btn btn-outline" onclick="clearForm()">🔄 Clear Form</button>
+      <button class="btn btn-red" id="delBtn" style="display:none" onclick="deleteEv()">🗑️ Delete Event</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== LIST VIEW ====== -->
+<div class="view" id="view-list">
+  <div class="sec-hdr">
+    <h2>📋 Events List</h2>
+    <p>Active events only. Click a row to edit.</p>
+  </div>
+  <div class="card">
+    <div class="filter-bar">
+      <input type="text" id="flName" placeholder="🔍 Event Name" oninput="renderList()">
+      <input type="text" id="flContact" placeholder="🔍 Contact" oninput="renderList()">
+      <input type="text" id="flLoc" placeholder="🔍 Location" oninput="renderList()">
+      <input type="text" id="flLabor" placeholder="🔍 Labor" oninput="renderList()">
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Event Name</th><th>Location</th><th>Contact</th>
+            <th>Labor</th><th>MXC Cal</th><th>CVENT</th><th>Done</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="listBody"></tbody>
+      </table>
+    </div>
+    <div id="listEmpty" class="no-rows" style="display:none">No events found.</div>
+  </div>
+</div>
+
+<!-- ====== CALENDAR VIEW ====== -->
+<div class="view" id="view-cal">
+  <div class="sec-hdr">
+    <h2>📅 Calendar</h2>
+    <p>Click an event to view and edit details.</p>
+  </div>
+  <div class="card">
+    <div class="cal-hdr">
+      <button class="btn btn-outline btn-sm" onclick="calMove(-1)">← Prev</button>
+      <div class="cal-mo" id="calMo"></div>
+      <button class="btn btn-outline btn-sm" onclick="calMove(1)">Next →</button>
+    </div>
+    <div class="cal-grid" id="calDays"></div>
+    <div class="cal-grid" id="calCells" style="margin-top:3px"></div>
+  </div>
+</div>
+
+<!-- ====== ARCHIVED VIEW ====== -->
+<div class="view" id="view-arch">
+  <div class="sec-hdr">
+    <h2>🗄️ Archived Events</h2>
+    <p>Events with CVENT Form AND Event Completed both marked Yes. Click to view or un-archive.</p>
+  </div>
+  <div class="card">
+    <div style="margin-bottom:13px">
+      <input type="text" id="archQ" placeholder="🔍 Search archived events..." oninput="renderArch()" style="max-width:380px;width:100%">
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th><th>Event Name</th><th>Meeting ID</th>
+            <th>Location</th><th>Contact</th><th>Labor</th><th>MXC Cal</th>
+          </tr>
+        </thead>
+        <tbody id="archBody"></tbody>
+      </table>
+    </div>
+    <div id="archEmpty" class="no-rows" style="display:none">No archived events yet.</div>
+  </div>
+</div>
+
+</main>
+<div id="toast"></div>
+
+<script>
+// ---- Storage ----
+var SK = 'mxc_events';
+function getEvs(){return JSON.parse(localStorage.getItem(SK)||'[]');}
+function setEvs(a){localStorage.setItem(SK,JSON.stringify(a));}
+function uid(){return 'evt_'+Date.now()+'_'+Math.random().toString(36).substr(2,6);}
+
+// ---- Toggle state ----
+var TS = {mxc:'no', cv:'no', co:'no'};
+
+function tog(k, v){
+  TS[k]=v;
+  if(k==='mxc'){
+    document.getElementById('mxcY').className='tb yes'+(v==='yes'?' on':'');
+    document.getElementById('mxcN').className='tb no'+(v==='no'?' on':'');
+  } else if(k==='cv'){
+    document.getElementById('cvY').className='tb yes'+(v==='yes'?' on':'');
+    document.getElementById('cvN').className='tb no'+(v==='no'?' on':'');
+  } else {
+    document.getElementById('coY').className='tb yes'+(v==='yes'?' on':'');
+    document.getElementById('coN').className='tb no'+(v==='no'?' on':'');
+  }
+}
+
+function resetToggs(){
+  TS={mxc:'no',cv:'no',co:'no'};
+  tog('mxc','no'); tog('cv','no'); tog('co','no');
+}
+
+// ---- Nav ----
+function showView(v){
+  var ids=['add','list','cal','arch'];
+  var nbs=['nb-add','nb-list','nb-cal','nb-arch'];
+  ids.forEach(function(id){
+    document.getElementById('view-'+id).style.display='none';
+  });
+  nbs.forEach(function(id){
+    document.getElementById(id).classList.remove('active');
+  });
+  document.getElementById('view-'+v).style.display='block';
+  document.getElementById('nb-'+v).classList.add('active');
+  if(v==='list') renderList();
+  if(v==='cal') renderCal();
+  if(v==='arch') renderArch();
+  updateCounts();
+}
+
+// ---- Email Parse ----
+function parseEmail(){
+  var raw = document.getElementById('emailPaste').value;
+  if(!raw.trim()){toast('Please paste an email first.');return;}
+
+  function getField(text, keys){
+    for(var i=0;i<keys.length;i++){
+      var k = keys[i].replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      var patterns = [
+        new RegExp(k+'\\s*[|\t]\\s*(.+?)(?:\n|$)','im'),
+        new RegExp(k+'\\s*:\\s*(.+?)(?:\n|$)','im')
+      ];
+      for(var j=0;j<patterns.length;j++){
+        var m = text.match(patterns[j]);
+        if(m && m[1] && m[1].trim()) return m[1].trim();
+      }
+    }
+    return '';
+  }
+
+  var mid = getField(raw,['Meeting ID Number','Meeting ID']);
+  var ename = getField(raw,['Event Name']);
+  var sdate = getField(raw,['Preferred Start Date']);
+  var stime = getField(raw,['Event Start Time']);
+  var etime = getField(raw,['Event End Time']);
+  var cfn = getField(raw,['Event Contact First Name']);
+  var cln = getField(raw,['Event Contact Last Name']);
+  var contact = [cfn,cln].filter(Boolean).join(' ');
+  var locRaw = getField(raw,['Type of Virtual/Digital Event']);
+  var loc = locRaw;
+  var lm = locRaw.match(/^([^:]+?):/);
+  if(lm) loc = lm[1].trim();
+  var notes = getField(raw,['Please provide any additional details that would be helpful for the Digital Events team be aware of (e.g., speaker information, external organizations involved).','Please provide any additional details','additional details']);
+
+  if(mid) document.getElementById('fMid').value=mid;
+  if(ename) document.getElementById('fName').value=ename;
+  if(sdate){
+    var dp=sdate.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if(dp) document.getElementById('fDate').value=dp[3]+'-'+dp[1].padStart(2,'0')+'-'+dp[2].padStart(2,'0');
+  }
+  if(stime){var t=to24(stime);if(t) document.getElementById('fStart').value=t;}
+  if(etime){var t=to24(etime);if(t) document.getElementById('fEnd').value=t;}
+  if(contact) document.getElementById('fContact').value=contact;
+  if(loc) document.getElementById('fLoc').value=loc;
+  if(notes) document.getElementById('fNotes').value=notes;
+
+  toast('✅ Email parsed successfully!');
+}
+
+function to24(s){
+  var m=s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if(!m) return null;
+  var h=parseInt(m[1]),mn=m[2],ap=m[3]?m[3].toUpperCase():null;
+  if(ap==='PM'&&h<12) h+=12;
+  if(ap==='AM'&&h===12) h=0;
+  return String(h).padStart(2,'0')+':'+mn;
+}
+
+// ---- Form ----
+function clearForm(){
+  document.getElementById('evId').value='';
+  ['fDate','fName','fMid','fLoc','fStart','fEnd','fContact','fLabor','fNotes'].forEach(function(id){
+    document.getElementById(id).value='';
+  });
+  document.getElementById('emailPaste').value='';
+  resetToggs();
+  document.getElementById('nhSection').style.display='none';
+  document.getElementById('nhList').innerHTML='';
+  document.getElementById('delBtn').style.display='none';
+  document.getElementById('formTitle').textContent='Add New Event';
+  document.getElementById('formSub').textContent='Paste an assignment email to auto-fill, or enter details manually.';
+}
+
+function loadEv(id){
+  var evs=getEvs();
+  var ev=evs.find(function(e){return e.id===id;});
+  if(!ev) return;
+  clearForm();
+  document.getElementById('evId').value=ev.id;
+  document.getElementById('fDate').value=ev.date||'';
+  document.getElementById('fName').value=ev.eventName||'';
+  document.getElementById('fMid').value=ev.meetingId||'';
+  document.getElementById('fLoc').value=ev.location||'';
+  document.getElementById('fStart').value=ev.startTime||'';
+  document.getElementById('fEnd').value=ev.endTime||'';
+  document.getElementById('fContact').value=ev.contact||'';
+  document.getElementById('fLabor').value=ev.labor||'';
+  tog('mxc',ev.mxcCalendar||'no');
+  tog('cv',ev.cventForm||'no');
+  tog('co',ev.completed||'no');
+  document.getElementById('formTitle').textContent='Edit Event';
+  document.getElementById('formSub').textContent=ev.eventName||'';
+  document.getElementById('delBtn').style.display='inline-flex';
+  if(ev.notesHistory&&ev.notesHistory.length>0){
+    document.getElementById('nhSection').style.display='block';
+    renderNH(ev.notesHistory);
+  }
+  showView('add');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function renderNH(hist){
+  document.getElementById('nhList').innerHTML=hist.map(function(n){
+    return '<div class="note-item"><div class="note-ts">'+esc(n.timestamp)+'</div><div>'+esc(n.text)+'</div></div>';
+  }).join('');
+}
+
+function saveEv(){
+  var id=document.getElementById('evId').value;
+  var note=document.getElementById('fNotes').value.trim();
+  var evs=getEvs();
+  var now=new Date();
+  var ts=now.toLocaleDateString('en-US',{month:'2-digit',day:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+
+  if(id){
+    var idx=evs.findIndex(function(e){return e.id===id;});
+    if(idx>-1){
+      var ev=evs[idx];
+      ev.date=document.getElementById('fDate').value;
+      ev.eventName=document.getElementById('fName').value;
+      ev.meetingId=document.getElementById('fMid').value;
+      ev.location=document.getElementById('fLoc').value;
+      ev.startTime=document.getElementById('fStart').value;
+      ev.endTime=document.getElementById('fEnd').value;
+      ev.contact=document.getElementById('fContact').value;
+      ev.labor=document.getElementById('fLabor').value;
+      ev.mxcCalendar=TS.mxc;
+      ev.cventForm=TS.cv;
+      ev.completed=TS.co;
+      if(note){if(!ev.notesHistory)ev.notesHistory=[];ev.notesHistory.unshift({timestamp:ts,text:note});}
+      evs[idx]=ev;
+    }
+  } else {
+    evs.push({
+      id:uid(),
+      date:document.getElementById('fDate').value,
+      eventName:document.getElementById('fName').value,
+      meetingId:document.getElementById('fMid').value,
+      location:document.getElementById('fLoc').value,
+      startTime:document.getElementById('fStart').value,
+      endTime:document.getElementById('fEnd').value,
+      contact:document.getElementById('fContact').value,
+      labor:document.getElementById('fLabor').value,
+      mxcCalendar:TS.mxc,
+      cventForm:TS.cv,
+      completed:TS.co,
+      notesHistory:note?[{timestamp:ts,text:note}]:[],
+      createdAt:ts
+    });
+  }
+  setEvs(evs);
+  updateCounts();
+  toast('✅ Event saved!');
+  clearForm();
+  showView('list');
+}
+
+function deleteEv(){
+  var id=document.getElementById('evId').value;
+  if(!id) return;
+  if(!confirm('Delete this event? This cannot be undone.')) return;
+  setEvs(getEvs().filter(function(e){return e.id!==id;}));
+  updateCounts();
+  toast('🗑️ Event deleted.');
+  clearForm();
+  showView('list');
+}
+
+// ---- List ----
+function renderList(){
+  var evs=getEvs().filter(function(e){return !isArch(e);});
+  var fn=(document.getElementById('flName').value||'').toLowerCase();
+  var fc=(document.getElementById('flContact').value||'').toLowerCase();
+  var fl=(document.getElementById('flLoc').value||'').toLowerCase();
+  var flb=(document.getElementById('flLabor').value||'').toLowerCase();
+  var filtered=evs.filter(function(e){
+    return(!fn||(e.eventName||'').toLowerCase().includes(fn))
+      &&(!fc||(e.contact||'').toLowerCase().includes(fc))
+      &&(!fl||(e.location||'').toLowerCase().includes(fl))
+      &&(!flb||(e.labor||'').toLowerCase().includes(flb));
+  }).sort(function(a,b){return(a.date||'')>(b.date||'')?1:-1;});
+
+  var tb=document.getElementById('listBody');
+  var em=document.getElementById('listEmpty');
+  if(!filtered.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=filtered.map(function(e){
+    return '<tr onclick="loadEv(''+e.id+'')">'
+      +'<td style="white-space:nowrap">'+fmtDate(e.date)+'</td>'
+      +'<td><strong>'+esc(e.eventName||'—')+'</strong></td>'
+      +'<td>'+esc(e.location||'—')+'</td>'
+      +'<td>'+esc(e.contact||'—')+'</td>'
+      +'<td>'+esc(e.labor||'—')+'</td>'
+      +'<td><span class="pill '+(e.mxcCalendar==='yes'?'p-yes':'p-no')+'">'+(e.mxcCalendar==='yes'?'Yes':'No')+'</span></td>'
+      +'<td><span class="pill '+(e.cventForm==='yes'?'p-yes':'p-no')+'">'+(e.cventForm==='yes'?'Yes':'No')+'</span></td>'
+      +'<td><span class="pill '+(e.completed==='yes'?'p-yes':'p-no')+'">'+(e.completed==='yes'?'Yes':'No')+'</span></td>'
+      +'<td onclick="event.stopPropagation()"><button class="btn btn-red btn-sm" onclick="qDel(''+e.id+'')">Del</button></td>'
+      +'</tr>';
+  }).join('');
+}
+
+function qDel(id){
+  if(!confirm('Delete this event?')) return;
+  setEvs(getEvs().filter(function(e){return e.id!==id;}));
+  updateCounts();
+  renderList();
+  toast('🗑️ Event deleted.');
+}
+
+// ---- Calendar ----
+var CAL_DATE = new Date();
+var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function calMove(d){
+  CAL_DATE=new Date(CAL_DATE.getFullYear(),CAL_DATE.getMonth()+d,1);
+  renderCal();
+}
+
+function renderCal(){
+  var yr=CAL_DATE.getFullYear(), mo=CAL_DATE.getMonth();
+  document.getElementById('calMo').textContent=MONTHS[mo]+' '+yr;
+  var days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  document.getElementById('calDays').innerHTML=days.map(function(d){return '<div class="cal-dn">'+d+'</div>';}).join('');
+
+  var evs=getEvs().filter(function(e){return !isArch(e);});
+  var today=new Date();
+  var todayStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+  var firstDay=new Date(yr,mo,1).getDay();
+  var dim=new Date(yr,mo+1,0).getDate();
+  var diPrev=new Date(yr,mo,0).getDate();
+  var total=firstDay+dim;
+  if(total%7!==0) total+=7-total%7;
+  var html='';
+  for(var i=0;i<total;i++){
+    var day,isOther=false,ds='';
+    if(i<firstDay){
+      day=diPrev-firstDay+1+i; isOther=true;
+      var pm=mo===0?12:mo, py=mo===0?yr-1:yr;
+      ds=py+'-'+String(pm).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    } else if(i>=firstDay+dim){
+      day=i-firstDay-dim+1; isOther=true;
+      var nm=mo===11?1:mo+2, ny=mo===11?yr+1:yr;
+      ds=ny+'-'+String(nm).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    } else {
+      day=i-firstDay+1;
+      ds=yr+'-'+String(mo+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    }
+    var isToday=ds===todayStr;
+    var dayEvs=evs.filter(function(e){return e.date===ds;});
+    html+='<div class="cal-cell'+(isOther?' other':'')+(isToday?' today':'')+'"><div class="cal-num">'+day+'</div>'
+      +dayEvs.map(function(e){return '<span class="cal-ev" onclick="loadEv(''+e.id+'')" title="'+esc(e.eventName||'')+'">'+esc(e.eventName||'Event')+'</span>';}).join('')
+      +'</div>';
+  }
+  document.getElementById('calCells').innerHTML=html;
+}
+
+// ---- Archived ----
+function isArch(e){return e.cventForm==='yes'&&e.completed==='yes';}
+
+function renderArch(){
+  var q=(document.getElementById('archQ').value||'').toLowerCase();
+  var evs=getEvs().filter(function(e){return isArch(e);}).filter(function(e){
+    if(!q) return true;
+    return JSON.stringify(e).toLowerCase().includes(q);
+  }).sort(function(a,b){return(a.date||'')>(b.date||'')?-1:1;});
+  var tb=document.getElementById('archBody');
+  var em=document.getElementById('archEmpty');
+  if(!evs.length){tb.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  tb.innerHTML=evs.map(function(e){
+    return '<tr onclick="loadEv(''+e.id+'')" style="opacity:0.85">'
+      +'<td style="white-space:nowrap">'+fmtDate(e.date)+'</td>'
+      +'<td><strong>'+esc(e.eventName||'—')+'</strong></td>'
+      +'<td>'+esc(e.meetingId||'—')+'</td>'
+      +'<td>'+esc(e.location||'—')+'</td>'
+      +'<td>'+esc(e.contact||'—')+'</td>'
+      +'<td>'+esc(e.labor||'—')+'</td>'
+      +'<td><span class="pill '+(e.mxcCalendar==='yes'?'p-yes':'p-no')+'">'+(e.mxcCalendar==='yes'?'Yes':'No')+'</span></td>'
+      +'</tr>';
+  }).join('');
+}
+
+// ---- Utils ----
+function updateCounts(){
+  var evs=getEvs();
+  var arch=evs.filter(isArch).length;
+  var active=evs.filter(function(e){return !isArch(e);}).length;
+  document.getElementById('archBadge').textContent=arch;
+  document.getElementById('hdrCount').textContent=active+' active event'+(active!==1?'s':'');
+}
+
+function fmtDate(s){
+  if(!s) return '—';
+  var p=s.split('-');
+  if(p.length!==3) return s;
+  return p[1]+'/'+p[2]+'/'+p[0];
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},2800);
+}
+
+// ---- Init ----
+updateCounts();
+</script>
+</body>
+</html>
