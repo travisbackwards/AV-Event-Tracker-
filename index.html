@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MXC Event Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', Arial, sans-serif; background: #f4f7fa; color: #1a2533; min-height: 100vh; }
+
+/* HEADER */
+#hdr { background: #1a3a5c; color: #fff; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+#hdr h1 { font-size: 1.1rem; font-weight: 700; }
+#hdrCount { font-size: 0.75rem; opacity: 0.7; }
+
+/* NAV */
+#nav { background: #1a3a5c; display: flex; overflow-x: auto; border-top: 1px solid rgba(255,255,255,0.12); position: sticky; top: 49px; z-index: 199; }
+#nav::-webkit-scrollbar { height: 0; }
+.nb { background: none; border: none; border-bottom: 3px solid transparent; color: rgba(255,255,255,0.65); cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 500; padding: 12px 18px; white-space: nowrap; transition: all 0.2s; }
+.nb:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.nb.active { border-bottom-color: #e8a020; color: #fff; }
+#archBadge { background: #e8a020; border-radius: 10px; color: #fff; font-size: 0.65rem; font-weight: 700; margin-left: 4px; padding: 1px 6px; }
+
+/* MAIN */
+#main { max-width: 1080px; margin: 0 auto; padding: 20px 14px 60px; }
+
+/* CARDS */
+.card { background: #fff; border-radius: 10px; box-shadow: 0 2px 10px rgba(26,58,92,0.09); padding: 22px; margin-bottom: 18px; }
+.card-title { font-size: 0.95rem; font-weight: 700; color: #1a3a5c; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 2px solid #d0dbe8; }
+
+/* PARSE BOX */
+.parsebox { background: #eef4fb; border: 1.5px dashed #a0bcd8; border-radius: 10px; padding: 16px; margin-bottom: 18px; }
+.parsebox textarea { background: #fff; border: 1.5px solid #d0dbe8; border-radius: 7px; font-family: inherit; font-size: 0.88rem; margin-top: 8px; min-height: 90px; padding: 9px 11px; resize: vertical; width: 100%; }
+.parsebox textarea:focus { border-color: #2a5a8c; outline: none; }
+
+/* FORM */
+.fg2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 600px) { .fg2 { grid-template-columns: 1fr; } }
+.fg { display: flex; flex-direction: column; gap: 5px; }
+.fg.full { grid-column: 1 / -1; }
+.fg label { color: #1a3a5c; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; }
+.fg input, .fg textarea { background: #fff; border: 1.5px solid #d0dbe8; border-radius: 7px; color: #1a2533; font-family: inherit; font-size: 0.9rem; padding: 9px 11px; width: 100%; transition: border-color 0.2s; }
+.fg input:focus, .fg textarea:focus { border-color: #2a5a8c; box-shadow: 0 0 0 3px rgba(42,90,140,0.1); outline: none; }
+.fg textarea { min-height: 75px; resize: vertical; }
+
+/* SECTION TITLE */
+.sec-h { margin-bottom: 16px; }
+.sec-h h2 { color: #1a3a5c; font-size: 1.15rem; font-weight: 700; }
+.sec-h p { color: #6b7f93; font-size: 0.82rem; margin-top: 3px; }
+
+/* TOGGLES */
+.tog-row { display: flex; align-items: center; gap: 12px; margin: 14px 0; flex-wrap: wrap; }
+.tog-lbl { color: #1a3a5c; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; min-width: 140px; }
+.tog-btns { display: flex; gap: 8px; }
+.tb { border: 1.5px solid #d0dbe8; border-radius: 20px; background: #fff; color: #6b7f93; cursor: pointer; font-family: inherit; font-size: 0.82rem; font-weight: 700; padding: 7px 18px; transition: all 0.18s; }
+.tb.yes.on { background: #28a745; border-color: #28a745; color: #fff; }
+.tb.no.on { background: #dc3545; border-color: #dc3545; color: #fff; }
+.tb:hover { border-color: #2a5a8c; }
+
+/* BUTTONS */
+.btn { align-items: center; border: none; border-radius: 7px; cursor: pointer; display: inline-flex; font-family: inherit; font-size: 0.88rem; font-weight: 600; gap: 5px; padding: 9px 20px; transition: all 0.18s; }
+.btn-p { background: #1a3a5c; color: #fff; }
+.btn-p:hover { background: #2a5a8c; }
+.btn-a { background: #e8a020; color: #fff; }
+.btn-a:hover { background: #c8880e; }
+.btn-o { background: #fff; border: 1.5px solid #1a3a5c; color: #1a3a5c; }
+.btn-o:hover { background: #1a3a5c; color: #fff; }
+.btn-r { background: #dc3545; color: #fff; font-size: 0.8rem; padding: 7px 14px; }
+.btn-r:hover { background: #b02a37; }
+.btn-sm { font-size: 0.78rem; padding: 5px 11px; }
+.btn-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+/* NOTES HISTORY */
+.nh { border-left: 3px solid #2a5a8c; border-radius: 0 6px 6px 0; background: #f0f4f9; font-size: 0.82rem; margin-bottom: 6px; padding: 7px 11px; }
+.nh-ts { color: #6b7f93; font-size: 0.72rem; font-weight: 700; margin-bottom: 2px; }
+#nhScroll { max-height: 160px; overflow-y: auto; margin-top: 6px; }
+
+/* FILTERS */
+.fbar { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 9px; margin-bottom: 14px; }
+.fbar input { background: #fff; border: 1.5px solid #d0dbe8; border-radius: 7px; color: #1a2533; font-family: inherit; font-size: 0.82rem; padding: 7px 10px; width: 100%; }
+.fbar input:focus { border-color: #2a5a8c; outline: none; }
+
+/* TABLE */
+.twrap { border: 1px solid #d0dbe8; border-radius: 7px; overflow-x: auto; }
+table { border-collapse: collapse; font-size: 0.84rem; width: 100%; }
+thead th { background: #1a3a5c; color: #fff; font-size: 0.77rem; font-weight: 600; padding: 10px 11px; text-align: left; white-space: nowrap; }
+tbody tr { border-bottom: 1px solid #e8edf2; cursor: pointer; transition: background 0.14s; }
+tbody tr:hover { background: #eef4fb; }
+tbody td { padding: 9px 11px; vertical-align: middle; }
+.pill { border-radius: 12px; display: inline-block; font-size: 0.72rem; font-weight: 700; padding: 2px 9px; }
+.py { background: #d4edda; color: #155724; }
+.pn { background: #f8d7da; color: #721c24; }
+.norows { color: #6b7f93; font-size: 0.9rem; padding: 36px; text-align: center; }
+
+/* CALENDAR */
+.cal-hdr { align-items: center; display: flex; justify-content: space-between; margin-bottom: 14px; }
+#calTitle { color: #1a3a5c; font-size: 1.05rem; font-weight: 700; }
+#calGrid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.cal-dn { color: #6b7f93; font-size: 0.7rem; font-weight: 700; padding: 5px 0; text-align: center; text-transform: uppercase; }
+.cal-cell { background: #fff; border: 1px solid #d0dbe8; border-radius: 5px; min-height: 80px; padding: 4px; }
+@media (max-width: 560px) { .cal-cell { min-height: 48px; } }
+.cal-cell.other { background: #f0f3f7; opacity: 0.55; }
+.cal-cell.today { border: 2px solid #e8a020; }
+.cal-num { color: #6b7f93; font-size: 0.72rem; font-weight: 700; margin-bottom: 2px; }
+.cal-cell.today .cal-num { color: #e8a020; }
+.cal-ev { background: #1a3a5c; border-radius: 3px; color: #fff; cursor: pointer; display: block; font-size: 0.63rem; margin-bottom: 2px; overflow: hidden; padding: 2px 4px; text-overflow: ellipsis; white-space: nowrap; }
+.cal-ev:hover { background: #2a5a8c; }
+
+/* TOAST */
+#toast { background: #1a3a5c; border-radius: 8px; bottom: 22px; box-shadow: 0 4px 14px rgba(0,0,0,0.2); color: #fff; font-size: 0.88rem; font-weight: 500; left: 50%; opacity: 0; padding: 11px 26px; pointer-events: none; position: fixed; transform: translateX(-50%); transition: opacity 0.3s; z-index: 9999; }
+#toast.show { opacity: 1; }
+
+.divider { border: none; border-top: 2px solid #d0dbe8; margin: 14px 0; }
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <h1>&#127916; MXC Event Tracker</h1>
+  <span id="hdrCount"></span>
+</div>
+
+<div id="nav">
+  <button class="nb active" id="nb-add" onclick="showView('add')">&#10133; Add Event</button>
+  <button class="nb" id="nb-list" onclick="showView('list')">&#128203; Events List</button>
+  <button class="nb" id="nb-cal" onclick="showView('cal')">&#128197; Calendar</button>
+  <button class="nb" id="nb-arch" onclick="showView('arch')">&#128452; Archived <span id="archBadge">0</span></button>
+</div>
+
+<div id="main">
+
+  <!-- ADD / EDIT VIEW -->
+  <div id="vAdd" style="display:block">
+    <div class="sec-h">
+      <h2 id="formTitle">Add New Event</h2>
+      <p id="formSub">Paste an assignment email below to auto-fill, or enter details manually.</p>
+    </div>
+
+    <div class="parsebox">
+      <div class="card-title">&#128231; Parse Assignment Email</div>
+      <textarea id="emailText" placeholder="Paste the full 'New Digital Lead Assignment' email here, then click Parse Email..."></textarea>
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn btn-a" onclick="parseEmail()">&#9889; Parse Email</button>
+        <button class="btn btn-o" onclick="clearEmail()">Clear</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">&#128221; Event Details</div>
+      <input type="hidden" id="evId">
+
+      <div class="fg2">
+        <div class="fg">
+          <label>Date</label>
+          <input type="date" id="fDate">
+        </div>
+        <div class="fg">
+          <label>Event Name</label>
+          <input type="text" id="fName" placeholder="Event name">
+        </div>
+        <div class="fg">
+          <label>Meeting ID</label>
+          <input type="text" id="fMid" placeholder="e.g. 21336">
+        </div>
+        <div class="fg">
+          <label>Location</label>
+          <input type="text" id="fLoc" placeholder="e.g. Microsoft Teams, Studio A">
+        </div>
+        <div class="fg">
+          <label>Start Time</label>
+          <input type="time" id="fStart">
+        </div>
+        <div class="fg">
+          <label>End Time</label>
+          <input type="time" id="fEnd">
+        </div>
+        <div class="fg full">
+          <label>Point of Contact</label>
+          <input type="text" id="fContact" placeholder="Contact name">
+        </div>
+        <div class="fg full">
+          <label>Labor Booked</label>
+          <input type="text" id="fLabor" placeholder="e.g. Camera Op - John Smith, Audio Tech - Jane Doe">
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="tog-row">
+        <span class="tog-lbl">On MXC Calendar?</span>
+        <div class="tog-btns">
+          <button class="tb yes" id="btnMxcY" onclick="setTog('mxc','yes')">&#10003; Yes</button>
+          <button class="tb no on" id="btnMxcN" onclick="setTog('mxc','no')">&#10007; No</button>
+        </div>
+      </div>
+
+      <div class="tog-row">
+        <span class="tog-lbl">CVENT Form</span>
+        <div class="tog-btns">
+          <button class="tb yes" id="btnCvY" onclick="setTog('cv','yes')">&#10003; Yes</button>
+          <button class="tb no on" id="btnCvN" onclick="setTog('cv','no')">&#10007; No</button>
+        </div>
+      </div>
+
+      <div class="tog-row">
+        <span class="tog-lbl">Event Completed</span>
+        <div class="tog-btns">
+          <button class="tb yes" id="btnCoY" onclick="setTog('co','yes')">&#10003; Yes</button>
+          <button class="tb no on" id="btnCoN" onclick="setTog('co','no')">&#10007; No</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <div class="fg full" style="margin-top:4px">
+        <label>Notes (New Entry)</label>
+        <textarea id="fNotes" placeholder="Type a new note here. It will be saved with a timestamp."></textarea>
+      </div>
+
+      <div id="nhDiv" style="display:none; margin-top:12px">
+        <label style="color:#1a3a5c;font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px">&#128203; Notes History</label>
+        <div id="nhScroll">
+          <div id="nhList"></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-p" onclick="saveEv()">&#128190; Save Event</button>
+        <button class="btn btn-o" onclick="clearForm()">&#128260; Clear Form</button>
+        <button class="btn btn-r" id="delBtn" style="display:none" onclick="deleteEv()">&#128465; Delete Event</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIST VIEW -->
+  <div id="vList" style="display:none">
+    <div class="sec-h">
+      <h2>&#128203; Events List</h2>
+      <p>Active events only. Click any row to edit.</p>
+    </div>
+    <div class="card">
+      <div class="fbar">
+        <input type="text" id="flName" placeholder="&#128269; Event Name" oninput="renderList()">
+        <input type="text" id="flContact" placeholder="&#128269; Contact" oninput="renderList()">
+        <input type="text" id="flLoc" placeholder="&#128269; Location" oninput="renderList()">
+        <input type="text" id="flLabor" placeholder="&#128269; Labor" oninput="renderList()">
+      </div>
+      <div class="twrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Event Name</th>
+              <th>Location</th>
+              <th>Contact</th>
+              <th>Labor</th>
+              <th>MXC Cal</th>
+              <th>CVENT</th>
+              <th>Done</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="listBody"></tbody>
+        </table>
+      </div>
+      <p id="listEmpty" class="norows" style="display:none">No events found. Add your first event!</p>
+    </div>
+  </div>
+
+  <!-- CALENDAR VIEW -->
+  <div id="vCal" style="display:none">
+    <div class="sec-h">
+      <h2>&#128197; Calendar</h2>
+      <p>Click an event to view and edit details.</p>
+    </div>
+    <div class="card">
+      <div class="cal-hdr">
+        <button class="btn btn-o btn-sm" onclick="calPrev()">&#8592; Prev</button>
+        <span id="calTitle"></span>
+        <button class="btn btn-o btn-sm" onclick="calNext()">Next &#8594;</button>
+      </div>
+      <div id="calGrid"></div>
+    </div>
+  </div>
+
+  <!-- ARCHIVED VIEW -->
+  <div id="vArch" style="display:none">
+    <div class="sec-h">
+      <h2>&#128452; Archived Events</h2>
+      <p>Events where both CVENT Form and Event Completed are Yes. Click to view or un-archive.</p>
+    </div>
+    <div class="card">
+      <div style="margin-bottom:13px">
+        <input type="text" id="archSearch" placeholder="&#128269; Search archived events..." oninput="renderArch()" style="max-width:380px;width:100%;background:#fff;border:1.5px solid #d0dbe8;border-radius:7px;font-family:inherit;font-size:0.88rem;padding:8px 11px;">
+      </div>
+      <div class="twrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Event Name</th>
+              <th>Meeting ID</th>
+              <th>Location</th>
+              <th>Contact</th>
+              <th>Labor</th>
+              <th>MXC Cal</th>
+            </tr>
+          </thead>
+          <tbody id="archBody"></tbody>
+        </table>
+      </div>
+      <p id="archEmpty" class="norows" style="display:none">No archived events yet.</p>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<div id="toast"></div>
+
+<script>
+var STORE_KEY = 'mxc_events';
+var toggleVals = { mxc: 'no', cv: 'no', co: 'no' };
+var calYear = new Date().getFullYear();
+var calMonth = new Date().getMonth();
+var MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+// ---- Storage ----
+function getEvs() {
+  var raw = localStorage.getItem(STORE_KEY);
+  if (!raw) return [];
+  return JSON.parse(raw);
+}
+function setEvs(arr) {
+  localStorage.setItem(STORE_KEY, JSON.stringify(arr));
+}
+function makeId() {
+  return 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+}
+
+// ---- Navigation ----
+function showView(name) {
+  var views = ['add', 'list', 'cal', 'arch'];
+  var i;
+  for (i = 0; i < views.length; i++) {
+    document.getElementById('v' + views[i].charAt(0).toUpperCase() + views[i].slice(1)).style.display = 'none';
+    document.getElementById('nb-' + views[i]).classList.remove('active');
+  }
+  document.getElementById('vAdd').style.display = 'none';
+  document.getElementById('vList').style.display = 'none';
+  document.getElementById('vCal').style.display = 'none';
+  document.getElementById('vArch').style.display = 'none';
+
+  if (name === 'add') { document.getElementById('vAdd').style.display = 'block'; document.getElementById('nb-add').classList.add('active'); }
+  else if (name === 'list') { document.getElementById('vList').style.display = 'block'; document.getElementById('nb-list').classList.add('active'); renderList(); }
+  else if (name === 'cal') { document.getElementById('vCal').style.display = 'block'; document.getElementById('nb-cal').classList.add('active'); renderCal(); }
+  else if (name === 'arch') { document.getElementById('vArch').style.display = 'block'; document.getElementById('nb-arch').classList.add('active'); renderArch(); }
+
+  updateCounts();
+}
+
+// ---- Toggles ----
+function setTog(key, val) {
+  toggleVals[key] = val;
+  if (key === 'mxc') {
+    document.getElementById('btnMxcY').className = 'tb yes' + (val === 'yes' ? ' on' : '');
+    document.getElementById('btnMxcN').className = 'tb no' + (val === 'no' ? ' on' : '');
+  } else if (key === 'cv') {
+    document.getElementById('btnCvY').className = 'tb yes' + (val === 'yes' ? ' on' : '');
+    document.getElementById('btnCvN').className = 'tb no' + (val === 'no' ? ' on' : '');
+  } else if (key === 'co') {
+    document.getElementById('btnCoY').className = 'tb yes' + (val === 'yes' ? ' on' : '');
+    document.getElementById('btnCoN').className = 'tb no' + (val === 'no' ? ' on' : '');
+  }
+}
+function resetToggles() {
+  setTog('mxc', 'no');
+  setTog('cv', 'no');
+  setTog('co', 'no');
+}
+
+// ---- Email ----
+function clearEmail() { document.getElementById('emailText').value = ''; }
+
+function getF(text, keys) {
+  var i, j, key, re, m;
+  for (i = 0; i < keys.length; i++) {
+    key = keys[i].replace(/[-\/\^$*+?.()|[\]{}]/g, '\$&');
+    var patterns = [
+      new RegExp(key + '\s*[|\t]\s*(.+)', 'im'),
+      new RegExp(key + '\s*:\s*(.+)', 'im')
+    ];
+    for (j = 0; j < patterns.length; j++) {
+      m = text.match(patterns[j]);
+      if (m && m[1] && m[1].trim()) return m[1].trim();
+    }
+  }
+  return '';
+}
+
+function to24(str) {
+  var m = str.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+  if (!m) return '';
+  var h = parseInt(m[1]), mn = m[2], ap = m[3] ? m[3].toUpperCase() : '';
+  if (ap === 'PM' && h < 12) h += 12;
+  if (ap === 'AM' && h === 12) h = 0;
+  return (h < 10 ? '0' : '') + h + ':' + mn;
+}
+
+function parseEmail() {
+  var raw = document.getElementById('emailText').value;
+  if (!raw.trim()) { showToast('Please paste an email first.'); return; }
+
+  var mid = getF(raw, ['Meeting ID Number', 'Meeting ID']);
+  var ename = getF(raw, ['Event Name']);
+  var sdate = getF(raw, ['Preferred Start Date']);
+  var stime = getF(raw, ['Event Start Time']);
+  var etime = getF(raw, ['Event End Time']);
+  var cfn = getF(raw, ['Event Contact First Name']);
+  var cln = getF(raw, ['Event Contact Last Name']);
+  var contact = (cfn + ' ' + cln).trim();
+  var locRaw = getF(raw, ['Type of Virtual/Digital Event']);
+  var loc = locRaw;
+  var lm = locRaw.match(/^([^:]+):/);
+  if (lm) loc = lm[1].trim();
+  var notes = getF(raw, [
+    'Please provide any additional details that would be helpful for the Digital Events team be aware of (e.g., speaker information, external organizations involved).',
+    'Please provide any additional details',
+    'additional details'
+  ]);
+
+  if (mid) document.getElementById('fMid').value = mid;
+  if (ename) document.getElementById('fName').value = ename;
+  if (sdate) {
+    var dp = sdate.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (dp) document.getElementById('fDate').value = dp[3] + '-' + (dp[1].length < 2 ? '0' : '') + dp[1] + '-' + (dp[2].length < 2 ? '0' : '') + dp[2];
+  }
+  if (stime) { var t1 = to24(stime); if (t1) document.getElementById('fStart').value = t1; }
+  if (etime) { var t2 = to24(etime); if (t2) document.getElementById('fEnd').value = t2; }
+  if (contact) document.getElementById('fContact').value = contact;
+  if (loc) document.getElementById('fLoc').value = loc;
+  if (notes) document.getElementById('fNotes').value = notes;
+
+  showToast('Email parsed successfully!');
+}
+
+// ---- Form ----
+function clearForm() {
+  document.getElementById('evId').value = '';
+  document.getElementById('fDate').value = '';
+  document.getElementById('fName').value = '';
+  document.getElementById('fMid').value = '';
+  document.getElementById('fLoc').value = '';
+  document.getElementById('fStart').value = '';
+  document.getElementById('fEnd').value = '';
+  document.getElementById('fContact').value = '';
+  document.getElementById('fLabor').value = '';
+  document.getElementById('fNotes').value = '';
+  document.getElementById('emailText').value = '';
+  resetToggles();
+  document.getElementById('nhDiv').style.display = 'none';
+  document.getElementById('nhList').innerHTML = '';
+  document.getElementById('delBtn').style.display = 'none';
+  document.getElementById('formTitle').textContent = 'Add New Event';
+  document.getElementById('formSub').textContent = 'Paste an assignment email below to auto-fill, or enter details manually.';
+}
+
+function nowTs() {
+  var n = new Date();
+  var mo = n.getMonth() + 1, d = n.getDate(), y = n.getFullYear();
+  var h = n.getHours(), mi = n.getMinutes();
+  var ap = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if (h === 0) h = 12;
+  return (mo < 10 ? '0' : '') + mo + '/' + (d < 10 ? '0' : '') + d + '/' + y + ' ' + h + ':' + (mi < 10 ? '0' : '') + mi + ' ' + ap;
+}
+
+function renderNH(hist) {
+  var i, html = '';
+  for (i = 0; i < hist.length; i++) {
+    html += '<div class="nh"><div class="nh-ts">' + escHtml(hist[i].timestamp) + '</div><div>' + escHtml(hist[i].text) + '</div></div>';
+  }
+  document.getElementById('nhList').innerHTML = html;
+}
+
+function loadEv(id) {
+  var evs = getEvs();
+  var ev = null;
+  var i;
+  for (i = 0; i < evs.length; i++) { if (evs[i].id === id) { ev = evs[i]; break; } }
+  if (!ev) return;
+  clearForm();
+  document.getElementById('evId').value = ev.id;
+  document.getElementById('fDate').value = ev.date || '';
+  document.getElementById('fName').value = ev.eventName || '';
+  document.getElementById('fMid').value = ev.meetingId || '';
+  document.getElementById('fLoc').value = ev.location || '';
+  document.getElementById('fStart').value = ev.startTime || '';
+  document.getElementById('fEnd').value = ev.endTime || '';
+  document.getElementById('fContact').value = ev.contact || '';
+  document.getElementById('fLabor').value = ev.labor || '';
+  setTog('mxc', ev.mxcCalendar || 'no');
+  setTog('cv', ev.cventForm || 'no');
+  setTog('co', ev.completed || 'no');
+  document.getElementById('formTitle').textContent = 'Edit Event';
+  document.getElementById('formSub').textContent = ev.eventName || '';
+  document.getElementById('delBtn').style.display = 'inline-flex';
+  if (ev.notesHistory && ev.notesHistory.length > 0) {
+    document.getElementById('nhDiv').style.display = 'block';
+    renderNH(ev.notesHistory);
+  }
+  showView('add');
+  window.scrollTo(0, 0);
+}
+
+function saveEv() {
+  var id = document.getElementById('evId').value;
+  var note = document.getElementById('fNotes').value.trim();
+  var evs = getEvs();
+  var ts = nowTs();
+  var i, idx = -1;
+
+  if (id) {
+    for (i = 0; i < evs.length; i++) { if (evs[i].id === id) { idx = i; break; } }
+    if (idx > -1) {
+      evs[idx].date = document.getElementById('fDate').value;
+      evs[idx].eventName = document.getElementById('fName').value;
+      evs[idx].meetingId = document.getElementById('fMid').value;
+      evs[idx].location = document.getElementById('fLoc').value;
+      evs[idx].startTime = document.getElementById('fStart').value;
+      evs[idx].endTime = document.getElementById('fEnd').value;
+      evs[idx].contact = document.getElementById('fContact').value;
+      evs[idx].labor = document.getElementById('fLabor').value;
+      evs[idx].mxcCalendar = toggleVals.mxc;
+      evs[idx].cventForm = toggleVals.cv;
+      evs[idx].completed = toggleVals.co;
+      if (note) {
+        if (!evs[idx].notesHistory) evs[idx].notesHistory = [];
+        evs[idx].notesHistory.unshift({ timestamp: ts, text: note });
+      }
+    }
+  } else {
+    var newEv = {
+      id: makeId(),
+      date: document.getElementById('fDate').value,
+      eventName: document.getElementById('fName').value,
+      meetingId: document.getElementById('fMid').value,
+      location: document.getElementById('fLoc').value,
+      startTime: document.getElementById('fStart').value,
+      endTime: document.getElementById('fEnd').value,
+      contact: document.getElementById('fContact').value,
+      labor: document.getElementById('fLabor').value,
+      mxcCalendar: toggleVals.mxc,
+      cventForm: toggleVals.cv,
+      completed: toggleVals.co,
+      notesHistory: note ? [{ timestamp: ts, text: note }] : [],
+      createdAt: ts
+    };
+    evs.push(newEv);
+  }
+
+  setEvs(evs);
+  updateCounts();
+  showToast('Event saved!');
+  clearForm();
+  showView('list');
+}
+
+function deleteEv() {
+  var id = document.getElementById('evId').value;
+  if (!id) return;
+  if (!confirm('Delete this event? This cannot be undone.')) return;
+  var evs = getEvs();
+  var i, newEvs = [];
+  for (i = 0; i < evs.length; i++) { if (evs[i].id !== id) newEvs.push(evs[i]); }
+  setEvs(newEvs);
+  updateCounts();
+  showToast('Event deleted.');
+  clearForm();
+  showView('list');
+}
+
+// ---- List ----
+function renderList() {
+  var evs = getEvs();
+  var active = [];
+  var i;
+  for (i = 0; i < evs.length; i++) { if (!isArch(evs[i])) active.push(evs[i]); }
+
+  var fn = (document.getElementById('flName').value || '').toLowerCase();
+  var fc = (document.getElementById('flContact').value || '').toLowerCase();
+  var fl = (document.getElementById('flLoc').value || '').toLowerCase();
+  var flb = (document.getElementById('flLabor').value || '').toLowerCase();
+
+  var filtered = [];
+  for (i = 0; i < active.length; i++) {
+    var e = active[i];
+    if (fn && (e.eventName || '').toLowerCase().indexOf(fn) === -1) continue;
+    if (fc && (e.contact || '').toLowerCase().indexOf(fc) === -1) continue;
+    if (fl && (e.location || '').toLowerCase().indexOf(fl) === -1) continue;
+    if (flb && (e.labor || '').toLowerCase().indexOf(flb) === -1) continue;
+    filtered.push(e);
+  }
+
+  filtered.sort(function(a, b) {
+    if ((a.date || '') < (b.date || '')) return -1;
+    if ((a.date || '') > (b.date || '')) return 1;
+    return 0;
+  });
+
+  var tb = document.getElementById('listBody');
+  var em = document.getElementById('listEmpty');
+
+  if (filtered.length === 0) {
+    tb.innerHTML = '';
+    em.style.display = 'block';
+    return;
+  }
+  em.style.display = 'none';
+
+  var html = '';
+  for (i = 0; i < filtered.length; i++) {
+    var e = filtered[i];
+    html += '<tr onclick="loadEv('' + e.id + '')">';
+    html += '<td style="white-space:nowrap">' + fmtDate(e.date) + '</td>';
+    html += '<td><strong>' + escHtml(e.eventName || '&mdash;') + '</strong></td>';
+    html += '<td>' + escHtml(e.location || '&mdash;') + '</td>';
+    html += '<td>' + escHtml(e.contact || '&mdash;') + '</td>';
+    html += '<td>' + escHtml(e.labor || '&mdash;') + '</td>';
+    html += '<td><span class="pill ' + (e.mxcCalendar === 'yes' ? 'py' : 'pn') + '">' + (e.mxcCalendar === 'yes' ? 'Yes' : 'No') + '</span></td>';
+    html += '<td><span class="pill ' + (e.cventForm === 'yes' ? 'py' : 'pn') + '">' + (e.cventForm === 'yes' ? 'Yes' : 'No') + '</span></td>';
+    html += '<td><span class="pill ' + (e.completed === 'yes' ? 'py' : 'pn') + '">' + (e.completed === 'yes' ? 'Yes' : 'No') + '</span></td>';
+    html += '<td onclick="event.stopPropagation()"><button class="btn btn-r btn-sm" onclick="qDel('' + e.id + '')">Del</button></td>';
+    html += '</tr>';
+  }
+  tb.innerHTML = html;
+}
+
+function qDel(id) {
+  if (!confirm('Delete this event?')) return;
+  var evs = getEvs();
+  var i, newEvs = [];
+  for (i = 0; i < evs.length; i++) { if (evs[i].id !== id) newEvs.push(evs[i]); }
+  setEvs(newEvs);
+  updateCounts();
+  renderList();
+  showToast('Event deleted.');
+}
+
+// ---- Calendar ----
+function calPrev() {
+  calMonth--;
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCal();
+}
+function calNext() {
+  calMonth++;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  renderCal();
+}
+
+function renderCal() {
+  document.getElementById('calTitle').textContent = MONTH_NAMES[calMonth] + ' ' + calYear;
+
+  var evs = getEvs();
+  var active = [];
+  var i;
+  for (i = 0; i < evs.length; i++) { if (!isArch(evs[i])) active.push(evs[i]); }
+
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + ((today.getMonth() + 1) < 10 ? '0' : '') + (today.getMonth() + 1) + '-' + (today.getDate() < 10 ? '0' : '') + today.getDate();
+
+  var firstDay = new Date(calYear, calMonth, 1).getDay();
+  var daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  var daysInPrev = new Date(calYear, calMonth, 0).getDate();
+  var total = firstDay + daysInMonth;
+  if (total % 7 !== 0) total += 7 - (total % 7);
+
+  var dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  var html = '';
+  for (i = 0; i < 7; i++) html += '<div class="cal-dn">' + dayNames[i] + '</div>';
+
+  for (i = 0; i < total; i++) {
+    var day, isOther = false, ds = '';
+    if (i < firstDay) {
+      day = daysInPrev - firstDay + 1 + i;
+      isOther = true;
+      var pm = calMonth === 0 ? 12 : calMonth;
+      var py = calMonth === 0 ? calYear - 1 : calYear;
+      ds = py + '-' + (pm < 10 ? '0' : '') + pm + '-' + (day < 10 ? '0' : '') + day;
+    } else if (i >= firstDay + daysInMonth) {
+      day = i - firstDay - daysInMonth + 1;
+      isOther = true;
+      var nm = calMonth === 11 ? 1 : calMonth + 2;
+      var ny = calMonth === 11 ? calYear + 1 : calYear;
+      ds = ny + '-' + (nm < 10 ? '0' : '') + nm + '-' + (day < 10 ? '0' : '') + day;
+    } else {
+      day = i - firstDay + 1;
+      ds = calYear + '-' + ((calMonth + 1) < 10 ? '0' : '') + (calMonth + 1) + '-' + (day < 10 ? '0' : '') + day;
+    }
+
+    var isToday = (ds === todayStr);
+    var cls = 'cal-cell' + (isOther ? ' other' : '') + (isToday ? ' today' : '');
+    html += '<div class="' + cls + '"><div class="cal-num">' + day + '</div>';
+
+    var j;
+    for (j = 0; j < active.length; j++) {
+      if (active[j].date === ds) {
+        html += '<span class="cal-ev" onclick="loadEv('' + active[j].id + '')" title="' + escHtml(active[j].eventName || '') + '">' + escHtml(active[j].eventName || 'Event') + '</span>';
+      }
+    }
+    html += '</div>';
+  }
+
+  document.getElementById('calGrid').innerHTML = html;
+}
+
+// ---- Archived ----
+function isArch(ev) {
+  return ev.cventForm === 'yes' && ev.completed === 'yes';
+}
+
+function renderArch() {
+  var q = (document.getElementById('archSearch').value || '').toLowerCase();
+  var evs = getEvs();
+  var arch = [];
+  var i;
+  for (i = 0; i < evs.length; i++) {
+    if (isArch(evs[i])) {
+      if (!q || JSON.stringify(evs[i]).toLowerCase().indexOf(q) !== -1) {
+        arch.push(evs[i]);
+      }
+    }
+  }
+
+  arch.sort(function(a, b) {
+    if ((a.date || '') > (b.date || '')) return -1;
+    if ((a.date || '') < (b.date || '')) return 1;
+    return 0;
+  });
+
+  var tb = document.getElementById('archBody');
+  var em = document.getElementById('archEmpty');
+
+  if (arch.length === 0) {
+    tb.innerHTML = '';
+    em.style.display = 'block';
+    return;
+  }
+  em.style.display = 'none';
+
+  var html = '';
+  for (i = 0; i < arch.length; i++) {
+    var e = arch[i];
+    html += '<tr onclick="loadEv('' + e.id + '')" style="opacity:0.85">';
+    html += '<td style="white-space:nowrap">' + fmtDate(e.date) + '</td>';
+    html += '<td><strong>' + escHtml(e.eventName || '&mdash;') + '</strong></td>';
+    html += '<td>' + escHtml(e.meetingId || '&mdash;') + '</td>';
+    html += '<td>' + escHtml(e.location || '&mdash;') + '</td>';
+    html += '<td>' + escHtml(e.contact || '&mdash;') + '</td>';
+    html += '<td>' + escHtml(e.labor || '&mdash;') + '</td>';
+    html += '<td><span class="pill ' + (e.mxcCalendar === 'yes' ? 'py' : 'pn') + '">' + (e.mxcCalendar === 'yes' ? 'Yes' : 'No') + '</span></td>';
+    html += '</tr>';
+  }
+  tb.innerHTML = html;
+}
+
+// ---- Utils ----
+function updateCounts() {
+  var evs = getEvs();
+  var archCount = 0, activeCount = 0;
+  var i;
+  for (i = 0; i < evs.length; i++) {
+    if (isArch(evs[i])) archCount++;
+    else activeCount++;
+  }
+  document.getElementById('archBadge').textContent = archCount;
+  document.getElementById('hdrCount').textContent = activeCount + ' active event' + (activeCount !== 1 ? 's' : '');
+}
+
+function fmtDate(s) {
+  if (!s) return '&mdash;';
+  var p = s.split('-');
+  if (p.length !== 3) return s;
+  return p[1] + '/' + p[2] + '/' + p[0];
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2800);
+}
+
+// ---- Init ----
+updateCounts();
+</script>
+</body>
+</html>
